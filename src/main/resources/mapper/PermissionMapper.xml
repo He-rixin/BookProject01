@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.test.mapper.PermissionMapper">
+    <resultMap id="BaseResultMap" type="com.test.model.Permission">
+        <constructor>
+            <idArg column="perid" jdbcType="INTEGER" javaType="java.lang.Integer"/>
+            <arg column="pername" jdbcType="VARCHAR" javaType="java.lang.String"/>
+            <arg column="pid" jdbcType="INTEGER" javaType="java.lang.Integer"/>
+            <arg column="permission" jdbcType="VARCHAR" javaType="java.lang.String"/>
+            <arg column="url" jdbcType="VARCHAR" javaType="java.lang.String"/>
+            <arg column="router" jdbcType="VARCHAR" javaType="java.lang.String"/>
+        </constructor>
+    </resultMap>
+    <sql id="Base_Column_List">
+        perid
+        , pername, pid, permission,url,router
+    </sql>
+    <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer">
+        select
+        <include refid="Base_Column_List"/>
+        from t_sys_permission
+        where perid = #{perid,jdbcType=INTEGER}
+    </select>
+    <select id="selectMenu" resultType="com.test.model.Permission">
+        select
+        <include refid="Base_Column_List"/>
+        from t_sys_permission where
+        <choose>
+            <when test="perid==null">
+                pid=-1
+            </when>
+            <otherwise>
+                pid=#{perid}
+            </otherwise>
+        </choose>
+    </select>
+    <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
+        delete
+        from t_sys_permission
+        where perid = #{perid,jdbcType=INTEGER}
+    </delete>
+    <insert id="insert" parameterType="com.test.model.Permission">
+        insert into t_sys_permission (perid, pername, pid,
+                                      permission)
+        values (#{perid,jdbcType=INTEGER}, #{pername,jdbcType=VARCHAR}, #{pid,jdbcType=INTEGER},
+                #{permission,jdbcType=VARCHAR})
+    </insert>
+    <insert id="insertSelective" parameterType="com.test.model.Permission">
+        insert into t_sys_permission
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="perid != null">
+                perid,
+            </if>
+            <if test="pername != null">
+                pername,
+            </if>
+            <if test="pid != null">
+                pid,
+            </if>
+            <if test="permission != null">
+                permission,
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="perid != null">
+                #{perid,jdbcType=INTEGER},
+            </if>
+            <if test="pername != null">
+                #{pername,jdbcType=VARCHAR},
+            </if>
+            <if test="pid != null">
+                #{pid,jdbcType=INTEGER},
+            </if>
+            <if test="permission != null">
+                #{permission,jdbcType=VARCHAR},
+            </if>
+        </trim>
+    </insert>
+    <update id="updateByPrimaryKeySelective" parameterType="com.test.model.Permission">
+        update t_sys_permission
+        <set>
+            <if test="pername != null">
+                pername = #{pername,jdbcType=VARCHAR},
+            </if>
+            <if test="pid != null">
+                pid = #{pid,jdbcType=INTEGER},
+            </if>
+            <if test="permission != null">
+                permission = #{permission,jdbcType=VARCHAR},
+            </if>
+        </set>
+        where perid = #{perid,jdbcType=INTEGER}
+    </update>
+    <update id="updateByPrimaryKey" parameterType="com.test.model.Permission">
+        update t_sys_permission
+        set pername    = #{pername,jdbcType=VARCHAR},
+            pid        = #{pid,jdbcType=INTEGER},
+            permission = #{permission,jdbcType=VARCHAR}
+        where perid = #{perid,jdbcType=INTEGER}
+    </update>
+</mapper>

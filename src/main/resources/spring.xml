@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-4.3.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.3.xsd
+		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-4.3.xsd">
+    <!--1. 注解式开发 -->
+    <!-- 注解驱动 -->
+    <context:annotation-config/>
+    <!-- 用注解方式注入bean，并指定查找范围：com.test及子子孙孙包-->
+    <context:component-scan base-package="com.test"/>
+    <!--2 引入外部jdbc配置文件-->
+    <!--   单文件 <context:property-placeholder location="classpath:jdbc.properties"/>-->
+    <!--   多文件-->
+<!--    <context:property-placeholder location="classpath*:*.properties" />-->
+    <bean id="propertyConfigurer"
+          class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+        <property name="systemPropertiesModeName" value="SYSTEM_PROPERTIES_MODE_OVERRIDE"/>
+        <property name="ignoreResourceNotFound" value="true"/>
+        <property name="locations">
+            <list>
+                <value>classpath:jdbc.properties</value>
+                <value>classpath:redis.properties</value>
+            </list>
+        </property>
+    </bean>
+    <!--3.配置数据库连接池（dbcp2）-->
+    <bean id="dataSource" class="org.apache.commons.dbcp2.BasicDataSource"
+          destroy-method="close">
+        <property name="driverClassName" value="${jdbc.driver}"/>
+        <property name="url" value="${jdbc.url}"/>
+        <property name="username" value="${jdbc.username}"/>
+        <property name="password" value="${jdbc.password}"/>
+        <!--初始连接数-->
+        <property name="initialSize" value="${jdbc.initialSize}"/>
+        <!--最大活动连接数-->
+        <property name="maxTotal" value="${jdbc.maxTotal}"/>
+        <!--最大空闲连接数-->
+        <property name="maxIdle" value="${jdbc.maxIdle}"/>
+        <!--最小空闲连接数-->
+        <property name="minIdle" value="${jdbc.minIdle}"/>
+        <!--设置为-1时，如果没有可用连接，连接池会一直无限期等待，直到获取到连接为止。-->
+        <!--如果设置为N（毫秒），则连接池会等待N毫秒，等待不到，则抛出异常-->
+        <property name="maxWaitMillis" value="${jdbc.maxWaitMillis}"/>
+    </bean>
+    <!--4. spring和MyBatis整合 -->
+    <!--1) 创建sqlSessionFactory-->
+    <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <!-- 指定数据源 -->
+        <property name="dataSource" ref="dataSource"/>
+        <!-- 自动扫描XxxMapping.xml文件，**任意路径 -->
+        <property name="mapperLocations" value="classpath*:mapper/*.xml"/>
+        <!-- 指定别名 -->
+        <!--        <property name="typeAliasesPackage" value="com/zking/ssm/**/model"/>-->
+        <!--配置pagehelper插件-->
+        <property name="plugins">
+            <array>
+                <bean class="com.github.pagehelper.PageInterceptor">
+                    <property name="properties">
+                        <value>
+                            helperDialect=mysql
+                        </value>
+                    </property>
+                </bean>
+            </array>
+        </property>
+    </bean>
+
+    <!--2) 自动扫描com/test/**/mapper下的所有XxxMapper接口(其实就是DAO接口)，并实现这些接口，-->
+    <!--   即可直接在程序中使用dao接口，不用再获取sqlsession对象-->
+    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <!--basePackage 属性是映射器接口文件的包路径。-->
+        <!--你可以使用分号或逗号 作为分隔符设置多于一个的包路径-->
+        <property name="basePackage" value="com/test/**/mapper"/>
+        <property name="sqlSessionFactoryBeanName" value="sqlSessionFactory"/>
+    </bean>
+
+    <!--5.注解式事务-->
+
+    <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="dataSource"/>
+    </bean>
+    <tx:annotation-driven transaction-manager="transactionManager"/>
+
+    <!--6.开启动态代理-->
+    <aop:aspectj-autoproxy/>
+    <import resource="spring-redis.xml"/>
+    <import resource="spring-shiro.xml"/>
+</beans>
